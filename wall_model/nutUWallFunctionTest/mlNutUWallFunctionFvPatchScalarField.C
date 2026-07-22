@@ -72,9 +72,13 @@ tmp<scalarField> mlNutUWallFunctionFvPatchScalarField::nut() const
 
     wallModelMLP mlModel(this->db().time().constant()/"wallModel");
 
+    std::cout << "Wall function loop" << std::endl; //debug
+
     forAll(nutw, facei)
     {
-        std::vector<scalar> inputs = {y[facei], magUp[facei], nuw[facei]};
+        std::cout << "facei: " << facei << ", y: " << y[facei] << ", magUp: " << magUp[facei] << ", nuw: " << nuw[facei] << std::endl; //debug
+        std::vector<scalar> inputs = {magUp[facei],y[facei], nuw[facei]};
+        std::cout << "predict: " << mlModel.predict(inputs) << std::endl; //debug
         nutw[facei] = std::max<scalar>(0, mlModel.predict(inputs));  // clamp negative
     }
 

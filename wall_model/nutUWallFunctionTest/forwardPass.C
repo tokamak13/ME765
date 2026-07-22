@@ -17,35 +17,20 @@ inline scalar relu(scalar x) { return std::max<scalar>(0, x); }
 inline scalar tanhAct(scalar x) { return std::tanh(x); }
 inline scalar linear(scalar x) { return x; }
 
-// --- Generic dense layer ---
-//struct DenseLayer
-//{
-//    label inDim, outDim;
-//    std::vector<scalar> W;   // flattened, row-major: W[i*outDim + j]
-//    std::vector<scalar> b;
-//    scalar (*activation)(scalar);
-
-//    std::vector<scalar> forward(const std::vector<scalar>& x) const
-//    {
-//        std::vector<scalar> y(outDim, 0.0);
-//        for (label j = 0; j < outDim; ++j)
-//        {
-//            scalar sum = b[j];
-//            for (label i = 0; i < inDim; ++i)
-//            {
-//                sum += x[i] * W[i*outDim + j];   // note: x*W convention, not W*x
-//            }
-//            y[j] = activation(sum);
-//        }
-//        return y;
-//    }
-//};
 
 std::vector<scalar> Foam::DenseLayer::forward
 (
     const std::vector<scalar>& x
 ) const
 {
+    if (label(x.size()) != inDim)
+    {
+        FatalErrorInFunction
+            << "Input size " << x.size()
+            << " does not match expected inDim " << inDim
+            << exit(FatalError);
+    }
+    
     std::vector<scalar> y(outDim, 0.0);
 
     for (label j = 0; j < outDim; ++j)
@@ -85,19 +70,19 @@ wallModelMLP::wallModelMLP(const fileName& dir)
     // hard-code architecture from your Step 3 printout, e.g. 3 -> 16 -> 16 -> 1
     // DenseLayer l0{3, 32, loadBin(dir/"layer0_W.bin", 3*32),
     //                    loadBin(dir/"layer0_b.bin", 32), relu};
+    DenseLayer l0{3, 32, loadBin(dir/"layer0_W.bin", 3*32),
+                             loadBin(dir/"layer0_b.bin", 32), relu};
     DenseLayer l1{32, 64, loadBin(dir/"layer1_W.bin", 32*64),
                              loadBin(dir/"layer1_b.bin", 64), relu};
     DenseLayer l2{64, 64, loadBin(dir/"layer2_W.bin", 64*64),
                              loadBin(dir/"layer2_b.bin", 64), relu};
     DenseLayer l3{64, 64, loadBin(dir/"layer3_W.bin", 64*64),
                              loadBin(dir/"layer3_b.bin", 64), relu};
-    DenseLayer l4{64, 64, loadBin(dir/"layer4_W.bin", 64*64),
-                             loadBin(dir/"layer4_b.bin", 64), relu};
-    DenseLayer l5{64, 32, loadBin(dir/"layer5_W.bin", 64*32),
-                             loadBin(dir/"layer5_b.bin", 32), relu};
-    DenseLayer l6{32, 1, loadBin(dir/"layer6_W.bin", 32*1),
-                            loadBin(dir/"layer6_b.bin", 1), linear};
-    layers_ = {l1, l2, l3, l4, l5, l6};
+    DenseLayer l4{64, 32, loadBin(dir/"layer4_W.bin", 64*32),
+                             loadBin(dir/"layer4_b.bin", 32), relu};
+    DenseLayer l5{32, 1, loadBin(dir/"layer5_W.bin", 32*1),
+                            loadBin(dir/"layer5_b.bin", 1), linear};
+    layers_ = {l0, l1, l2, l3, l4, l5};
 
     //inMean_ = loadBin(dir/"input_mean.bin", 3);
     //inStd_  = loadBin(dir/"input_std.bin", 3);
