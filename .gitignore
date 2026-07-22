@@ -1,0 +1,5 @@
+lodt_optimization_test/
+linux64GccDPInt32Opt/
+*.odt
+*.keras
+wall_model/tf-env/
